@@ -1,40 +1,42 @@
-# VR2Gather - Unity package for immersive social VR
+# VR2Gather Point Cloud Segmentation
 
-VR2Gather is an Unity package to allow creating immersive social VR applications in Unity. Participants in a VR2Gather-based experience can be represented as live volumetric video, and see themselves as they are captured live, thereby allowing more realistic social interaction than in avatar-only based systems.
+This project aims to enhance the quality of 3D point cloud streaming in immersive virtual reality (VR) communication applications like VR2Gather. It addresses the limitation of capturing entire scenes as bounding boxes, including unwanted background objects along with the human participant.
 
-VR2Gather experiences do not rely on a central cloud-based game engine. Each participant runs a local copy of the application, and communication and synchronization is handled through a central experience-agnostic  _Orchestrator_ that handles forwarding of control messages, point cloud streams and conversational audio between the participants.
+## Problem Statement
 
-VR2Gather is a descendent from `VRTApplication` created in the [VRTogether](https://vrtogether.eu) project, and further developed in the [Mediascape XR](https://www.dis.cwi.nl/funding/mediascape/) and [Transmixr](https://transmixr.eu) projects. Current development is primarily done by the [CWI DIS group](https://www.dis.cwi.nl).
+The current implementation of VR2Gather captures scenes in a bounding box fashion, which includes not only the human participant but also other objects like chairs, cabinets, and various items within the bounding box. This results in noisy point clouds with many outliers that adversely affect the quality of the generated 3D representation.
 
-> This work was supported through "PPS programmatoeslag TKI" Fund of the Dutch Ministry of Economic Affairs and Climate Policy and CLICKNL, the European Commission H2020 program, under the grant agreement 762111, VRTogether, http://vrtogether.eu/, and the European Commission Horizon Europe program, under the grant agreement 101070109, TRANSMIXR, https://transmixr.eu/. Funded by the European Union.
+## Solution Approach
 
-If you use this code or parts thereof, we kindly ask you to cite the relevant publication:
+To address this limitation, we propose applying a point cloud segmentation algorithm to automatically remove background outliers. This approach focuses on retaining only the foreground avatar point clouds, thereby enhancing the visual quality of the captured scene.
 
->I. Viola, J. Jansen, S. Subramanyam, I. Reimat and P. Cesar, "VR2Gather: A Collaborative, Social Virtual Reality System for Adaptive, Multiparty Real-Time Communication," in IEEE MultiMedia, vol. 30, no. 2, pp. 48-59, April-June 2023, doi: 10.1109/MMUL.2023.3263943.
+The solution involves processing 2D color and depth images captured by an Intel RealSense D455 camera to generate segmented point clouds. The segmentation process includes the following steps:
 
-Except where otherwise noted VR2Gather is copyright Centrum Wiskunde & Informatica, and distributed under the MIT license.
+1. **Background Subtraction**: Isolate the foreground object by subtracting a background image from the current frame.
+2. **Signal Amplification**: Enhance the detected regions using morphological operations like dilation and erosion.
+3. **Contour Finding**: Detect the boundary box around the foreground object within the binary mask.
+4. **Point Cloud Generation**: Create a 3D representation using only points within the detected contours.
 
-## Installing the VR2Gather package
+## Experiment and Results
 
-VR2Gather requires Unity 2022.3.
+The experiment was conducted on 25 action frames, including sitting, standing, and ground-level actions. Two segmentation algorithms were evaluated:
 
-VR2Gather requires a fair number of Unity packages and native packages. All of these are either freely available through the Unity Package Manager, or available as open source.
+1. **Segmented 1**: Considers only the contour coordinates to segment the point cloud.
+2. **Segmented 2**: Considers both the contour coordinates and the signal mask for segmentation.
 
-Please read the [Installation guide](Documentation/02-installation.md).
+Quantitative results showed that Segmented 2, which incorporates the signal mask, performed better across accuracy, precision, recall, F1 score, and Intersection-over-Union (IoU) metrics.
 
-We mean it: please read the [Installation guide](Documentation/02-installation.md). Also if you have used VR2Gather before. A lot of things have changed, and ensuring you have all the right bits and pieces installed, and you have done so in the right order, will save you a lot of headaches.
+Qualitative results visually demonstrated the superior ability of the Segmented 2 algorithm to isolate the foreground avatar cleanly, effectively removing background clutter and providing a more accurate representation.
 
-There is more documentation in [Documentation/01-overview.md](Documentation/01-overview.md) explaining how to develop your own VR experiences using VR2Gather.
+## Conclusion
 
-## Developing on VR2Gather itself
+This project successfully implemented point cloud foreground segmentation on a single frame point cloud, demonstrating the potential for improving the quality of 3D point cloud streaming in immersive VR applications. However, further experimentation is needed to evaluate and optimize the algorithm's time cost for real-time communication scenarios.
 
-If you want to make changes to VR2Gather you should check out this repository, <https://github.com/cwi-dis/VR2Gather>. But really only then: otherwise just install the Unity package through the package manager (following the instructions above).
+## Future Work
 
-At the toplevel folder you will find the source of the Unity package, `nl.cwi.dis.vr2gather`.
+To integrate this segmentation approach into real-time communication applications, further research is required to:
 
-You will also find 2 Unity projects:
+- Evaluate and optimize the algorithm's time cost for real-time performance.
+- Explore alternative methods for background subtraction that do not require a pre-existing background image, allowing for dynamic and changing environments.
 
-- `VRTApp-Develop` is a pretty empty project that imports `nl.cwi.dis.vr2gather` by relative pathname. This has the advantage that as you make changes to any of the files from the package these changes will be made in-place, so you can then commit and push them later. There is also a trick with a symlink used to include the Samples into this project.
-- `VRTApp-Sample` imports the package normally, i.e. using the github URL. So after you have made changes using VRTApp-Develop and pushed those changes you can open VRTApp-Sample, update the package, re-install the samples, and check that your changes actually work and have been pushed.
-
-After making changes, and before pushing or testing with VRTApp-Sample you should _always_ change the package version number in `nl.cwi.dis.vr2gather/package.json`. Otherwise the Unity package manager will think that package has not changed and it will not re-import it.
+By addressing these limitations, we can enhance the feasibility and usability of 3D point cloud streaming in providing immersive and natural meeting experiences.

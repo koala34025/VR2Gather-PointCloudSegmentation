@@ -1,0 +1,4 @@
+
+print(intrinsics.fx, intrinsics.fy, intrinsics.ppx, intrinsics.ppy)
+
+385.7314758300781 385.2828369140625 322.3908996582031 239.84091186523438
